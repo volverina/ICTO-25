@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+</head>
+<body>
+    <a-scene>
+        <!-- Освітлення -->
+        <a-light type="ambient" color="#445" intensity="0.5"></a-light>
+        <a-light type="directional" intensity="0.8" position="5 10 5"></a-light>
+
+        <!-- Фортеця -->
+        <!-- Основні стіни (прямокутні паралелепіпеди) -->
+        <a-box position="0 1.5 0" width="10" height="3" depth="10" 
+               material="src: https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg; repeat: 4 2">
+        </a-box>
+
+        <!-- Башти (циліндри з конусами зверху) -->
+        <a-cylinder position="-4 2 -4" radius="1" height="4"
+                    material="src: https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg; repeat: 2 2">
+        </a-cylinder>
+        <a-cone position="-4 4 -4" radius-bottom="1.2" radius-top="0" height="2"
+                material="src: https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg">
+        </a-cone>
+
+        <a-cylinder position="4 2 -4" radius="1" height="4"
+                    material="src: https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg; repeat: 2 2">
+        </a-cylinder>
+        <a-cone position="4 4 -4" radius-bottom="1.2" radius-top="0" height="2"
+                material="src: https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg">
+        </a-cone>
+
+        <!-- Флагшток (циліндр) -->
+        <a-cylinder position="0 5 0" radius="0.1" height="5" color="#666"></a-cylinder>
+        <a-sphere position="0 7.5 0" radius="0.2" color="#666"></a-sphere>
+
+        <!-- Прапор з анімацією -->
+        <a-plane id="flag" position="0 4 0" width="4" height="1" rotation="0 0 0"
+                 material="color: #ffffff">
+            <a-text value="Thank You Mario But Our Princess Is in Another Castle" 
+                    align="center" color="#000000" width="3.8" position="0 0 0.01">
+            </a-text>
+            <!-- Анімація підйому -->
+            <a-animation attribute="position"
+                        from="0 3 0"
+                        to="0 6 0"
+                        dur="2000"
+                        easing="linear">
+            </a-animation>
+            <!-- Анімація коливання на вітрі -->
+            <a-animation attribute="rotation"
+                        begin="2000"
+                        from="0 0 0"
+                        to="0 0 10"
+                        dur="1000"
+                        direction="alternate"
+                        repeat="indefinite">
+            </a-animation>
+        </a-plane>
+
+        <!-- Підлога -->
+        <a-plane position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#7BC8A4"></a-plane>
+
+        <!-- Камера -->
+        <a-camera position="0 5 15"></a-camera>
+    </a-scene>
+</body>
+</html>

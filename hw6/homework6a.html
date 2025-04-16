@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Оптимізований AR з лініями</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script>
+        // Переконайтесь, що THREE доступний глобально (зазвичай A-Frame це робить)
+        if (typeof THREE === 'undefined') {
+            console.error("THREE.js не завантажено! Переконайтесь, що A-Frame завантажено правильно.");
+        }
+    </script>
+</head>
+<body>
+    <script>
+        // Глобальний об'єкт для відстеження видимості маркерів
+        let markerVisible = { A: false, B: false, C: false, D: false, F: false, G: false };
+        const ALL_MARKER_IDS = ['A', 'B', 'C', 'D', 'F', 'G']; // Визначимо всі ID маркерів
+
+        // Компонент для реєстрації подій знаходження/втрати маркера
+        AFRAME.registerComponent('registerevents', {
+            init: function () {
+                const marker = this.el;
+                const markerId = marker.id; // Отримуємо ID маркера
+
+                if (!ALL_MARKER_IDS.includes(markerId)) {
+                    console.warn(`Маркер з ID "${markerId}" не входить до списку ALL_MARKER_IDS.`);
+                    return; // Не реєструвати події для невідомих ID
+                }
+
+                marker.addEventListener('markerFound', () => {
+                    markerVisible[markerId] = true;
+                    console.log(markerId, " знайдено");
+                });
+
+                marker.addEventListener('markerLost', () => {
+                    markerVisible[markerId] = false;
+                    console.log(markerId, " втрачено");
+                });
+            }
+        });
+
+        // Компонент для управління логікою відображення ліній та обчислень
+        AFRAME.registerComponent('run', {
+            init: function () {
+                console.log("Ініціалізація компонента 'run'");
+                this.markerIds = ALL_MARKER_IDS;
+                this.markerObjects = {}; // Для зберігання посилань на object3D маркерів
+                this.lineEntities = {};  // Для зберігання посилань на object3D сутностей ліній (<a-entity id="XY">)
+                this.lineMeshes = {};    // Для зберігання посилань на сітки циліндрів (THREE.Mesh)
+                this.coord = {};         // Для зберігання світових координат
+
+                // Кешуємо посилання на об'єкти маркерів та створюємо об'єкти для координат
+                this.markerIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        this.markerObjects[id] = el.object3D;
+                        this.coord[id] = new THREE.Vector3(); // Створюємо вектор для кожного маркера
+                    } else {
+                        console.error(`Не знайдено елемент маркера з ID: ${id}`);
+                    }
+                });
+
+                // Створюємо геометрію та матеріал для ліній ОДИН РАЗ
+                const lineGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1, 12);
+                // Зміщуємо та обертаємо геометрію, щоб вона малювалася від основи
+                lineGeometry.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0.5, 0));
+                lineGeometry.applyMatrix4(new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(90)));
+                const lineMaterial = new THREE.MeshLambertMaterial({ color: 0xFF0000 }); // Червоний колір
+
+                // Ітеруємо по всіх унікальних парах маркерів для створення ліній
+                for (let i = 0; i < this.markerIds.length; i++) {
+                    for (let j = i + 1; j < this.markerIds.length; j++) {
+                        const id1 = this.markerIds[i]; // ID першого маркера (напр., 'A')
+                        const id2 = this.markerIds[j]; // ID другого маркера (напр., 'B')
+                        const lineId = id1 + id2;      // ID лінії (напр., 'AB')
+
+                        // Знаходимо відповідну сутність лінії (<a-entity id="XY">)
+                        // Важливо: Сутність лінії XY має бути дочірньою для маркера X у HTML
+                        const lineEntityEl = document.getElementById(lineId);
+
+                        if (this.markerObjects[id1] && lineEntityEl) {
+                             this.lineEntities[lineId] = lineEntityEl.object3D;
+
+                             // Створюємо сітку (циліндр) для цієї лінії
+                             const lineMesh = new THREE.Mesh(lineGeometry, lineMaterial);
+                             lineMesh.visible = false; // Спочатку лінія невидима
+                             this.lineEntities[lineId].add(lineMesh); // Додаємо сітку до сутності лінії
+                             this.lineMeshes[lineId] = lineMesh; // Зберігаємо посилання на сітку
+                        } else {
+                             console.warn(`Не знайдено сутність лінії "${lineId}" або маркер "${id1}" для неї.`);
+                        }
+                    }
+                }
+
+                // Кешуємо текстовий елемент для виводу P та S
+                this.psTextElement = document.getElementById("PS");
+                if (!this.psTextElement) {
+                    console.warn("Не знайдено текстовий елемент з ID 'PS'.");
+                }
+
+                console.log("Ініціалізація 'run' завершена.");
+            },
+
+            tick: function () {
+                // 1. Оновлюємо світові координати всіх видимих маркерів
+                this.markerIds.forEach(id => {
+                    if (markerVisible[id] && this.markerObjects[id]) {
+                        this.markerObjects[id].getWorldPosition(this.coord[id]);
+                    }
+                });
+
+                // 2. Оновлюємо видимості, орієнтацію та масштаб ліній
+                for (let i = 0; i < this.markerIds.length; i++) {
+                    for (let j = i + 1; j < this.markerIds.length; j++) {
+                        const id1 = this.markerIds[i];
+                        const id2 = this.markerIds[j];
+                        const lineId = id1 + id2;
+
+                        const mesh = this.lineMeshes[lineId];
+                        const lineEntity = this.lineEntities[lineId];
+
+                        // Перевіряємо, чи існують об'єкти для цієї лінії
+                        if (!mesh || !lineEntity) continue;
+
+                        // Перевіряємо, чи обидва маркери для цієї лінії видимі
+                        if (markerVisible[id1] && markerVisible[id2]) {
+                            const distance = this.coord[id1].distanceTo(this.coord[id2]);
+
+                            // Перевірка на валідну відстань (уникаємо NaN або Infinity)
+                            if (isFinite(distance) && distance > 0.001) {
+                                // Орієнтуємо сутність лінії (яка є дочірньою для id1) на маркер id2
+                                lineEntity.lookAt(this.coord[id2]);
+                                // Масштабуємо сітку (циліндр) по осі Z відповідно до відстані
+                                mesh.scale.set(1, 1, distance);
+                                mesh.visible = true; // Робимо лінію видимою
+                            } else {
+                                mesh.visible = false; // Ховаємо лінію, якщо відстань некоректна
+                            }
+                        } else {
+                            // Якщо хоча б один маркер невидимий, ховаємо лінію
+                            mesh.visible = false;
+                        }
+                    }
+                }
+
+                // 3. Обчислюємо та відображаємо периметр (P) та площу (S) трикутника ABC
+                if (this.psTextElement) { // Перевіряємо, чи існує елемент тексту
+                    if (markerVisible["A"] && markerVisible["B"] && markerVisible["C"]) {
+                        const posA = this.coord['A'];
+                        const posB = this.coord['B'];
+                        const posC = this.coord['C'];
+
+                        const lenAB = posA.distanceTo(posB);
+                        const lenBC = posB.distanceTo(posC);
+                        const lenCA = posC.distanceTo(posA);
+
+                        // Перевірка на валідність сторін трикутника
+                        if (isFinite(lenAB) && isFinite(lenBC) && isFinite(lenCA) &&
+                            lenAB > 0 && lenBC > 0 && lenCA > 0)
+                        {
+                            const P = lenAB + lenBC + lenCA;
+                            const pp = P / 2; // Напівпериметр
+                            // Формула Герона для площі
+                            const S_raw = Math.sqrt(pp * (pp - lenAB) * (pp - lenBC) * (pp - lenCA));
+                             // Перевіряємо, чи результат обчислення площі валідний (не NaN)
+                             const S = isNaN(S_raw) ? 0 : S_raw;
+
+                            // Форматуємо вивід до двох знаків після коми
+                            const P_str = P.toFixed(2);
+                            const S_str = S.toFixed(2);
+
+                            this.psTextElement.setAttribute("value", `P=${P_str}, S=${S_str}`);
+                        } else {
+                             // Якщо сторони некоректні, очищаємо текст
+                            this.psTextElement.setAttribute("value", "Невірні дані для трикутника");
+                        }
+                    } else {
+                        // Якщо трикутник ABC не видимий, очищаємо текст
+                        this.psTextElement.setAttribute("value", "");
+                    }
+                }
+            }
+        });
+    </script>
+
+    <a-scene vr-mode-ui="enabled: false;"
+             renderer="logarithmicDepthBuffer: true; colorManagement: true;"
+             embedded
+             arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+
+        <a-marker type="pattern" url="../images/pattern-letterA.patt" id="A" registerevents>
+            <a-sphere color="blue" radius="0.10" position="0 0 0"></a-sphere>
+            <a-entity id="AB"></a-entity>
+            <a-entity id="AC"></a-entity>
+            <a-entity id="AD"></a-entity>
+            <a-entity id="AF"></a-entity>
+            <a-entity id="AG"></a-entity>
+            <a-entity id="text-container" position="0 0.3 0" rotation="-90 0 0">
+                 <a-text id="PS"
+                         color="yellow"
+                         value=""
+                         align="center"
+                         width="2">
+                 </a-text>
+             </a-entity>
+        </a-marker>
+
+        <a-marker type="pattern" url="../images/pattern-letterB.patt" id="B" registerevents>
+            <a-sphere color="green" radius="0.10" position="0 0 0"></a-sphere>
+            <a-entity id="BC"></a-entity>
+            <a-entity id="BD"></a-entity>
+            <a-entity id="BF"></a-entity>
+            <a-entity id="BG"></a-entity>
+        </a-marker>
+
+        <a-marker type="pattern" url="../images/pattern-letterC.patt" id="C" registerevents>
+            <a-sphere color="purple" radius="0.10" position="0 0 0"></a-sphere>
+            <a-entity id="CD"></a-entity>
+            <a-entity id="CF"></a-entity>
+            <a-entity id="CG"></a-entity>
+        </a-marker>
+
+        <a-marker type="pattern" url="../images/pattern-letterD.patt" id="D" registerevents>
+            <a-sphere color="orange" radius="0.10" position="0 0 0"></a-sphere>
+            <a-entity id="DF"></a-entity>
+            <a-entity id="DG"></a-entity>
+        </a-marker>
+
+        <a-marker type="pattern" url="../images/pattern-letterF.patt" id="F" registerevents>
+            <a-sphere color="cyan" radius="0.10" position="0 0 0"></a-sphere>
+            <a-entity id="FG"></a-entity>
+        </a-marker>
+
+        <a-marker type="pattern" url="../images/pattern-letterG.patt" id="G" registerevents>
+            <a-sphere color="magenta" radius="0.10" position="0 0 0"></a-sphere>
+            </a-marker>
+
+        <a-entity camera></a-entity>
+
+        <a-entity run></a-entity>
+
+    </a-scene>
+</body>
+</html>

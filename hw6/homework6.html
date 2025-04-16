@@ -1,0 +1,292 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="../aframe/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body>
+  	<script>
+		let markerVisible = { A: false, B: false, C: false, D: false, F: false, G: false };
+		AFRAME.registerComponent('registerevents', {
+		init: function () {
+			let marker = this.el;
+			marker.addEventListener('markerFound', function() {
+				markerVisible[ marker.id ] = true;
+				console.log(marker.id, " знайдено");
+			});
+			marker.addEventListener('markerLost', function() {
+				markerVisible[ marker.id ] = false;
+				console.log(marker.id, " втрачено");
+			});
+			}
+		});  
+		
+		
+		let coord = { A: new THREE.Vector3(), B: new THREE.Vector3(), C: new THREE.Vector3(), D: new THREE.Vector3(), F: new THREE.Vector3(), G: new THREE.Vector3() };
+		AFRAME.registerComponent('run', {
+			init: function () {
+				A = document.getElementById("A").object3D;
+				B = document.getElementById("B").object3D;
+				C = document.getElementById("C").object3D;
+				D = document.getElementById("D").object3D;
+				F = document.getElementById("F").object3D;
+				G = document.getElementById("G").object3D;
+			
+				AB = document.getElementById("AB").object3D;
+				AC = document.getElementById("AC").object3D;
+				AD = document.getElementById("AD").object3D;
+				AF = document.getElementById("AF").object3D;
+				AG = document.getElementById("AG").object3D;
+				BC = document.getElementById("BC").object3D;
+				BD = document.getElementById("BD").object3D;
+				BF = document.getElementById("BF").object3D;
+				BG = document.getElementById("BG").object3D;
+				CD = document.getElementById("CD").object3D;
+				CF = document.getElementById("CF").object3D;
+				CG = document.getElementById("CG").object3D;
+				DF = document.getElementById("DF").object3D;
+				DG = document.getElementById("DG").object3D;
+				FG = document.getElementById("FG").object3D;
+				
+				let material = new THREE.MeshLambertMaterial({color:0xFF0000});
+				let geometry = new THREE.CylinderGeometry(0.05, 0.05, 1, 12);
+				
+				geometry.applyMatrix4( new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ) );
+				geometry.applyMatrix4( new THREE.Matrix4().makeRotationX( THREE.MathUtils.degToRad( 90 ) ) );
+				
+				cAB = new THREE.Mesh( geometry, material ); AB.add( cAB ); cAB.visible = false;
+				cAC = new THREE.Mesh( geometry, material ); AC.add( cAC ); cAC.visible = false;
+				cAD = new THREE.Mesh( geometry, material ); AD.add( cAD ); cAD.visible = false;
+				cAF = new THREE.Mesh( geometry, material ); AF.add( cAF ); cAF.visible = false;
+				cAG = new THREE.Mesh( geometry, material ); AG.add( cAG ); cAG.visible = false;
+				cBC = new THREE.Mesh( geometry, material ); BC.add( cBC ); cBC.visible = false;
+				cBD = new THREE.Mesh( geometry, material ); BD.add( cBD ); cBD.visible = false;
+				cBF = new THREE.Mesh( geometry, material ); BF.add( cBF ); cBF.visible = false;
+				cBG = new THREE.Mesh( geometry, material ); BG.add( cBG ); cBG.visible = false;
+				cCD = new THREE.Mesh( geometry, material ); CD.add( cCD ); cCD.visible = false;
+				cCF = new THREE.Mesh( geometry, material ); CF.add( cCF ); cCF.visible = false;
+				cCG = new THREE.Mesh( geometry, material ); CG.add( cCG ); cCG.visible = false;
+				cDF = new THREE.Mesh( geometry, material ); DF.add( cDF ); cDF.visible = false;
+				cDG = new THREE.Mesh( geometry, material ); DG.add( cDG ); cDG.visible = false;
+				cFG = new THREE.Mesh( geometry, material ); FG.add( cFG ); cFG.visible = false;
+
+				console.log("Виконується один раз");
+			},
+			
+			tick: function () {
+				A.getWorldPosition(coord['A']);
+				B.getWorldPosition(coord['B']);
+				C.getWorldPosition(coord['C']);
+				D.getWorldPosition(coord['D']);
+				F.getWorldPosition(coord['F']);
+				G.getWorldPosition(coord['G']);
+				//console.log(coord);
+			
+				if(!markerVisible["A"]) {
+					cAB.visible = false;
+					cAC.visible = false;
+					cAD.visible = false;
+					cAF.visible = false;
+					cAG.visible = false;
+				}
+
+				if(!markerVisible["B"]) {
+					cAB.visible = false;
+					cBC.visible = false;
+					cBD.visible = false;
+					cBF.visible = false;
+					cBG.visible = false;
+				}
+
+				if(!markerVisible["C"]) {
+					cAC.visible = false;
+					cBC.visible = false;
+					cCD.visible = false;
+					cCF.visible = false;
+					cCG.visible = false;
+				}
+
+				if(!markerVisible["D"]) {
+					cAD.visible = false;
+					cBD.visible = false;
+					cCD.visible = false;
+					cDF.visible = false;
+					cDG.visible = false;
+				}
+
+				if(!markerVisible["F"]) {
+					cAF.visible = false;
+					cBF.visible = false;
+					cCF.visible = false;
+					cDF.visible = false;
+					cFG.visible = false;
+				}
+
+				if(!markerVisible["G"]) {
+					cAG.visible = false;
+					cBG.visible = false;
+					cCG.visible = false;
+					cDG.visible = false;
+					cFG.visible = false;
+				}
+
+				if(markerVisible["A"] && markerVisible["B"]) {
+					let distance = coord['A'].distanceTo(coord['B']);
+					AB.lookAt(coord['B']);
+					cAB.scale.set(1,1,distance);
+					cAB.visible = true;
+				}
+				if(markerVisible["A"] && markerVisible["C"]) {
+				    let distance = coord['A'].distanceTo(coord['C']);
+				    AC.lookAt(coord['C']);
+				    cAC.scale.set(1,1,distance);
+				    cAC.visible = true;
+				}
+				if(markerVisible["A"] && markerVisible["D"]) {
+				    let distance = coord['A'].distanceTo(coord['D']);
+				    AD.lookAt(coord['D']);
+				    cAD.scale.set(1,1,distance);
+				    cAD.visible = true;
+				}
+				if(markerVisible["A"] && markerVisible["F"]) {
+				    let distance = coord['A'].distanceTo(coord['F']);
+				    AF.lookAt(coord['F']);
+				    cAF.scale.set(1,1,distance);
+				    cAF.visible = true;
+				}
+				if(markerVisible["A"] && markerVisible["G"]) {
+				    let distance = coord['A'].distanceTo(coord['G']);
+				    AG.lookAt(coord['G']);
+				    cAG.scale.set(1,1,distance);
+				    cAG.visible = true;
+				}
+				if(markerVisible["B"] && markerVisible["C"]) {
+				    let distance = coord['B'].distanceTo(coord['C']);
+				    BC.lookAt(coord['C']);
+				    cBC.scale.set(1,1,distance);
+				    cBC.visible = true;
+				}
+				if(markerVisible["B"] && markerVisible["D"]) {
+				    let distance = coord['B'].distanceTo(coord['D']);
+				    BD.lookAt(coord['D']);
+				    cBD.scale.set(1,1,distance);
+				    cBD.visible = true;
+				}
+				if(markerVisible["B"] && markerVisible["F"]) {
+				    let distance = coord['B'].distanceTo(coord['F']);
+				    BF.lookAt(coord['F']);
+				    cBF.scale.set(1,1,distance);
+				    cBF.visible = true;
+				}
+				if(markerVisible["B"] && markerVisible["G"]) {
+				    let distance = coord['B'].distanceTo(coord['G']);
+				    BG.lookAt(coord['G']);
+				    cBG.scale.set(1,1,distance);
+				    cBG.visible = true;
+				}
+				if(markerVisible["C"] && markerVisible["D"]) {
+				    let distance = coord['C'].distanceTo(coord['D']);
+				    CD.lookAt(coord['D']);
+				    cCD.scale.set(1,1,distance);
+				    cCD.visible = true;
+				}
+				if(markerVisible["C"] && markerVisible["F"]) {
+				    let distance = coord['C'].distanceTo(coord['F']);
+				    CF.lookAt(coord['F']);
+				    cCF.scale.set(1,1,distance);
+				    cCF.visible = true;
+				}
+				if(markerVisible["C"] && markerVisible["G"]) {
+				    let distance = coord['C'].distanceTo(coord['G']);
+				    CG.lookAt(coord['G']);
+				    cCG.scale.set(1,1,distance);
+				    cCG.visible = true;
+				}
+				if(markerVisible["D"] && markerVisible["F"]) {
+				    let distance = coord['D'].distanceTo(coord['F']);
+				    DF.lookAt(coord['F']);
+				    cDF.scale.set(1,1,distance);
+				    cDF.visible = true;
+				}
+				if(markerVisible["D"] && markerVisible["G"]) {
+				    let distance = coord['D'].distanceTo(coord['G']);
+				    DG.lookAt(coord['G']);
+				    cDG.scale.set(1,1,distance);
+				    cDG.visible = true;
+				}
+				if(markerVisible["F"] && markerVisible["G"]) {
+				    let distance = coord['F'].distanceTo(coord['G']);
+				    FG.lookAt(coord['G']);
+				    cFG.scale.set(1,1,distance);
+				    cFG.visible = true;
+				}			
+				if(markerVisible["A"] && markerVisible["B"] &&  markerVisible["C"]) {
+					const lenAB = coord['A'].distanceTo(coord['B']);
+					const lenBC = coord['B'].distanceTo(coord['C']);
+					const lenCA = coord['C'].distanceTo(coord['A']);
+					let P = lenAB + lenBC + lenCA;
+					const pp = P/2;
+					let S = Math.sqrt((pp-lenAB)*(pp-lenBC)*(pp-lenCA));
+					P = Math.round(P * 100)/100.0;
+					S = Math.round(S * 100)/100.0;
+					PS = document.getElementById("PS");
+					PS.setAttribute("value", "P = "+P+", S = "+S);
+				}
+			},
+		});	
+  	</script>
+  
+    <a-scene vr-mode-ui="enabled: false;"
+    renderer="logarithmicDepthBuffer: true;"
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; debug: false;">
+
+    <a-marker type="pattern" url="../images/pattern-letterA.patt" id="A" registerevents>
+    	<a-sphere color="red" radius="0.10"></a-sphere>
+    	<a-entity id="AB"></a-entity>
+    	<a-entity id="AC"></a-entity>
+    	<a-entity id="AD"></a-entity>
+    	<a-entity id="AF"></a-entity>
+    	<a-entity id="AG"></a-entity>
+    	<a-text id="PS" color="yellow" value="" position="0 0.3 0" rotation="-90 0 0"></a-text>
+    </a-marker>
+
+    <a-marker type="pattern" url="../images/pattern-letterB.patt" id="B" registerevents>
+    	<a-sphere color="red" radius="0.10"></a-sphere>
+    	<a-entity id="BC"></a-entity>
+    	<a-entity id="BD"></a-entity>
+    	<a-entity id="BF"></a-entity>
+    	<a-entity id="BG"></a-entity>
+    </a-marker>
+
+    <a-marker type="pattern" url="../images/pattern-letterC.patt" id="C" registerevents>
+    	<a-sphere color="red" radius="0.10"></a-sphere>
+    	<a-entity id="CD"></a-entity>
+    	<a-entity id="CF"></a-entity>
+    	<a-entity id="CG"></a-entity>
+    </a-marker>
+
+    <a-marker type="pattern" url="../images/pattern-letterD.patt" id="D" registerevents>
+    	<a-sphere color="red" radius="0.10"></a-sphere>
+    	<a-entity id="DF"></a-entity>
+    	<a-entity id="DG"></a-entity>
+    </a-marker>
+
+    <a-marker type="pattern" url="../images/pattern-letterF.patt" id="F" registerevents>
+    	<a-sphere color="red" radius="0.10"></a-sphere>
+    	<a-entity id="FG"></a-entity>
+    </a-marker>
+
+    <a-marker type="pattern" url="../images/pattern-letterG.patt" id="G" registerevents>
+    	<a-sphere color="red" radius="0.10"></a-sphere>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+    <a-entity run></a-entity>
+
+    </a-scene>
+  </body>
+  
+</html>
+

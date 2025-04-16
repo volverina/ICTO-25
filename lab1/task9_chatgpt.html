@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Фортеця з прапором</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- Фортеця: основа -->
+      <!-- Основний циліндр з цегляною текстурою -->
+      <a-cylinder position="0 0.5 0" radius="4" height="1" src="https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg"></a-cylinder>
+      
+      <!-- Стіни фортеці -->
+      <a-box position="-4 1 0" width="0.5" height="2" depth="8" src="https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg"></a-box>
+      <a-box position="4 1 0" width="0.5" height="2" depth="8" src="https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg"></a-box>
+      <a-box position="0 1 4" width="8" height="2" depth="0.5" src="https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg"></a-box>
+      <a-box position="0 1 -4" width="8" height="2" depth="0.5" src="https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg"></a-box>
+      
+      <!-- Башти на кутах фортеці -->
+      <a-cone position="-4 2 4" radius-bottom="1" height="2" color="#AAA"></a-cone>
+      <a-cone position="4 2 4" radius-bottom="1" height="2" color="#AAA"></a-cone>
+      <a-cone position="-4 2 -4" radius-bottom="1" height="2" color="#AAA"></a-cone>
+      <a-cone position="4 2 -4" radius-bottom="1" height="2" color="#AAA"></a-cone>
+      
+      <!-- Флагшток -->
+      <a-cylinder position="0 3 0" radius="0.1" height="3" color="#888"></a-cylinder>
+      
+      <!-- Прапор -->
+      <!-- Створюємо контейнер для прапора, який спочатку розташований нижче, а потім піднімається -->
+      <a-entity id="flag" position="0 3.2 0.2">
+        <!-- Прапор як площина з текстом -->
+        <a-plane id="flagPlane"
+                 position="0.6 0 0"
+                 rotation="0 0 0"
+                 width="2"
+                 height="1"
+                 color="#FFF"
+                 text="value: Thank You Mario But Our Princess Is in Another Castle; align: center; color: black;">
+        </a-plane>
+        
+        <!-- Анімація підйому прапора -->
+        <a-animation
+          attribute="position"
+          begin="0"
+          dur="2000"
+          fill="forwards"
+          to="0 4.5 0.2"
+          easing="ease-out">
+        </a-animation>
+      </a-entity>
+      
+      <!-- Анімація «трептіння» прапора після підйому -->
+      <a-animation
+        attribute="rotation"
+        begin="2000"
+        dur="1000"
+        fill="forwards"
+        to="0 0 10"
+        direction="alternate"
+        repeat="indefinite"
+        target="#flagPlane">
+      </a-animation>
+      
+      <!-- Додаткове освітлення та камеру для огляду сцени -->
+      <a-entity light="type: ambient; intensity: 0.5"></a-entity>
+      <a-entity light="type: directional; intensity: 0.6" position="0 1 1"></a-entity>
+      <a-entity camera position="0 5 15"></a-entity>
+    </a-scene>
+  </body>
+</html>

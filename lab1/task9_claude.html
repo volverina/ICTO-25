@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Фортеця з прапором</title>
+    <script src="../aframe/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene background="color: #87CEEB">
+      <!-- Assets -->
+      <a-assets>
+        <img id="brick-texture" src="https://raw.githubusercontent.com/aframevr/sample-assets/refs/heads/master/assets/images/bricks/brick_roughness.jpg">
+      </a-assets>
+
+      <!-- Фон -->
+      <a-plane position="0 0 0" rotation="-90 0 0" width="50" height="50" color="#3f7d1d"></a-plane>
+
+      <!-- Зовнішні стіни фортеці -->
+      <!-- Передня стіна з воротами -->
+      <a-box position="-7 2 -5" width="4" height="4" depth="0.5" material="src: #brick-texture; repeat: 2 2"></a-box>
+      <a-box position="-3 2 -5" width="4" height="4" depth="0.5" material="src: #brick-texture; repeat: 2 2"></a-box>
+      <a-box position="-5 4 -5" width="2" height="2" depth="0.5" material="src: #brick-texture; repeat: 1 1"></a-box>
+      
+      <!-- Задня стіна -->
+      <a-box position="-5 2 5" width="10" height="4" depth="0.5" material="src: #brick-texture; repeat: 5 2"></a-box>
+      
+      <!-- Бокові стіни -->
+      <a-box position="-10 2 0" width="0.5" height="4" depth="10" material="src: #brick-texture; repeat: 5 2" rotation="0 90 0"></a-box>
+      <a-box position="0 2 0" width="0.5" height="4" depth="10" material="src: #brick-texture; repeat: 5 2" rotation="0 90 0"></a-box>
+
+      <!-- Кутові вежі -->
+      <a-cylinder position="-10 3 -5" radius="1.2" height="6" material="src: #brick-texture; repeat: 3 2"></a-cylinder>
+      <a-cylinder position="-10 3 5" radius="1.2" height="6" material="src: #brick-texture; repeat: 3 2"></a-cylinder>
+      <a-cylinder position="0 3 -5" radius="1.2" height="6" material="src: #brick-texture; repeat: 3 2"></a-cylinder>
+      <a-cylinder position="0 3 5" radius="1.2" height="6" material="src: #brick-texture; repeat: 3 2"></a-cylinder>
+
+      <!-- Дахи веж -->
+      <a-cone position="-10 6.5 -5" radius-bottom="1.4" radius-top="0" height="2" color="#8B4513"></a-cone>
+      <a-cone position="-10 6.5 5" radius-bottom="1.4" radius-top="0" height="2" color="#8B4513"></a-cone>
+      <a-cone position="0 6.5 -5" radius-bottom="1.4" radius-top="0" height="2" color="#8B4513"></a-cone>
+      <a-cone position="0 6.5 5" radius-bottom="1.4" radius-top="0" height="2" color="#8B4513"></a-cone>
+
+      <!-- Центральна вежа -->
+      <a-cylinder position="-5 4 0" radius="2.5" height="8" material="src: #brick-texture; repeat: 5 3"></a-cylinder>
+      <a-cone position="-5 8.5 0" radius-bottom="2.7" radius-top="0" height="3" color="#8B4513"></a-cone>
+
+      <!-- Малі вартові вежі на стіні -->
+      <a-cylinder position="-5 4 -5" radius="0.6" height="4" material="src: #brick-texture; repeat: 2 1"></a-cylinder>
+      <a-cone position="-5 6 -5" radius-bottom="0.7" radius-top="0" height="1" color="#8B4513"></a-cone>
+
+      <!-- Внутрішні будівлі -->
+      <a-box position="-7 1 0" width="3" height="2" depth="4" material="src: #brick-texture; repeat: 2 1"></a-box>
+      <a-box position="-3 1 0" width="3" height="2" depth="4" material="src: #brick-texture; repeat: 2 1"></a-box>
+
+      <!-- Флагшток на центральній вежі -->
+      <a-cylinder position="-5 11 0" radius="0.1" height="6" color="#8B4513"></a-cylinder>
+
+      <!-- Прапор з текстом -->
+      <a-entity id="flag-container" position="-5 8.5 0">
+        <a-entity id="flag-entity">
+          <a-plane id="flag" position="1.25 0 0" width="2.5" height="1.5" color="red">
+            <a-text value="Thank You Mario
+But Our Princess
+Is in Another Castle" position="0 0 0.01" color="white" align="center" width="2" wrap-count="20" scale="1.2 1.2 1.2" z-offset="0.01"></a-text>
+          </a-plane>
+        </a-entity>
+      </a-entity>
+
+      <!-- Камера -->
+      <a-entity position="-5 8 15">
+        <a-camera></a-camera>
+      </a-entity>
+    </a-scene>
+
+    <!-- Скрипт анімації -->
+    <script>
+      // Чекаємо завантаження сцени
+      document.querySelector('a-scene').addEventListener('loaded', function () {
+        // Отримуємо елементи прапора
+        const flagContainer = document.getElementById('flag-container');
+        const flagEntity = document.getElementById('flag-entity');
+        const flag = document.getElementById('flag');
+        
+        // Анімація підняття прапора
+        let currentHeight = 8.5;
+        const maxHeight = 12;
+        const raiseSpeed = 0.03;
+        
+        const raiseInterval = setInterval(() => {
+          currentHeight += raiseSpeed;
+          flagContainer.setAttribute('position', `-5 ${currentHeight} 0`);
+          
+          if (currentHeight >= maxHeight) {
+            clearInterval(raiseInterval);
+            // Починаємо анімацію розвівання прапора після підняття
+            startWavingAnimation();
+          }
+        }, 30);
+        
+        // Анімація розвівання прапора
+        function startWavingAnimation() {
+          let time = 0;
+          setInterval(() => {
+            time += 0.03;
+            
+            // Імітуємо розвівання прапора на вітрі за допомогою обертання та невеликих змін позиції
+            // Основне обертання прапора для імітації вітру
+            const rotY = Math.sin(time) * 8;
+            
+            // Додаткові тонкі рухи для реалістичності
+            const rotX = Math.sin(time * 1.2) * 2;
+            const rotZ = Math.sin(time * 0.7) * 3;
+            
+            // Застосовуємо обертання
+            flagEntity.setAttribute('rotation', `${rotX} ${rotY} ${rotZ}`);
+            
+            // Невеликі зміни позиції для більш природного руху
+            const posX = Math.sin(time * 0.8) * 0.05;
+            const posY = Math.sin(time * 1.1) * 0.03;
+            
+            flagEntity.setAttribute('position', `${posX} ${posY} 0`);
+          }, 20);
+        }
+      });
+    </script>
+  </body>
+</html>
