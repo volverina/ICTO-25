@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ML Video Processing Examples</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    .example-selector {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      z-index: 1000;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    
+    select {
+      background-color: #333;
+      color: white;
+      padding: 5px;
+      border: 1px solid #666;
+      border-radius: 4px;
+      width: 300px;
+    }
+    
+    .model-info {
+      position: absolute;
+      bottom: 60px;
+      right: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 300px;
+      font-size: 12px;
+    }
+    
+    #stop {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 1000; /* поверх усього іншого */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  </style>
+  
+  <!-- Import Maps for Three.js and MindAR -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+      "mindar-image-three":"https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+    }
+  }
+  </script>
+  
+  <!-- TensorFlow.js Core -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  
+  <!-- Model libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+  
+  <!-- MediaPipe libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+  
+  <!-- Face-API.js -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  
+  <!-- Fingerpose -->
+  <script src="https://cdn.jsdelivr.net/npm/fingerpose@0.1.0/dist/fingerpose.min.js"></script>
+  
+  <!-- Handsfree.js -->
+  <script src="https://cdn.jsdelivr.net/npm/handsfree@8.5.1/dist/handsfree.min.js"></script>
+  
+  <!-- Roboflow -->
+  <script src="https://cdn.roboflow.com/0.2.26/roboflow.js"></script>
+</head>
+<body>
+  <script type="module" id="script-loader"></script>
+  
+  <!-- Results display -->
+  <div id="result"></div>
+  <button type="button" id="stop">STOP!</button>
+
+  
+  <!-- Example selector -->
+  <div class="example-selector">
+    <select id="example-select">
+      <option value="main1.js">Object Detection (YOLOv5)</option>
+      <option value="main2.js">Pose Estimation (MoveNet)</option>
+      <option value="main3.js">Face Detection (Face-API.js)</option>
+      <option value="main4.js">Hand Gesture Recognition (MediaPipe)</option>
+      <option value="main5.js">Custom Object Detection (Roboflow)</option>
+      <option value="main6.js">Object Detection (EfficientDet)</option>
+      <option value="main7.js">Full Body Tracking (BlazePose)</option>
+      <option value="main8.js">Face Mesh (MediaPipe)</option>
+      <option value="main9.js">Advanced Gesture Recognition (Fingerpose)</option>
+      <option value="main10.js">Multi-Model Tracking (Handsfree.js)</option>
+    </select>
+  </div>
+  
+  <!-- Model information -->
+  <div class="model-info" id="model-info">
+    <div>Select a model from the dropdown to begin.</div>
+  </div>
+  
+  <script>
+    //alert("base.html, подія DOMContentLoaded ще не надійшла");
+    document.addEventListener('DOMContentLoaded', () => {
+      //alert("base.html, подія DOMContentLoaded вже надійшла");
+      // Model descriptions
+      const modelInfo = {
+        'main1.js': 'YOLOv5 is a state-of-the-art object detection model that can identify 80+ common objects in real-time.',
+        'main2.js': 'MoveNet is a fast and accurate pose estimation model that tracks 17 key body points.',
+        'main3.js': 'Face-API.js provides face detection, landmark recognition, and expression analysis.',
+        'main4.js': 'MediaPipe Hands provides real-time hand skeleton tracking with 21 landmarks per hand.',
+        'main5.js': 'Roboflow allows integration with custom-trained object detection models for specific use cases.',
+        'main6.js': 'EfficientDet balances accuracy and performance for efficient object detection in resource-constrained environments.',
+        'main7.js': 'BlazePose offers full-body pose tracking with 33 landmarks and excellent performance in browser environments.',
+        'main8.js': 'MediaPipe Face Mesh provides 468 facial landmarks for detailed face tracking, perfect for AR applications.',
+        'main9.js': 'Fingerpose enables advanced hand gesture recognition on top of hand pose models.',
+        'main10.js': 'Handsfree.js combines multiple models for comprehensive tracking of face, hands, and body in a simple API.'
+      };
+    
+      // Load the selected example
+      const selectElement = document.getElementById('example-select');
+      const scriptLoader = document.getElementById('script-loader');
+      const modelInfoEl = document.getElementById('model-info');
+      
+      // Update model info
+      const updateModelInfo = (value) => {
+        modelInfoEl.innerHTML = `<div><strong>${value.replace('.js', '')}</strong></div><div>${modelInfo[value]}</div>`;
+      };
+      
+      // Initial load
+      scriptLoader.src = selectElement.value;
+      updateModelInfo(selectElement.value);
+      
+      // Change handler
+      selectElement.addEventListener('change', () => {
+        // Update info
+        updateModelInfo(selectElement.value);
+        
+        // Clear previous content
+        const result = document.getElementById('result');
+        result.innerHTML = '';
+        
+        // Remove any canvas elements from previous examples
+        document.querySelectorAll('canvas:not([id])').forEach(el => el.remove());
+        
+        // Remove any handsfree elements
+        document.querySelectorAll('.handsfree-canvas').forEach(el => el.remove());
+        document.querySelectorAll('.handsfree-video').forEach(el => el.remove());
+        
+        // Load the selected script
+        scriptLoader.remove();
+        const newScriptLoader = document.createElement('script');
+        newScriptLoader.id = 'script-loader';
+        newScriptLoader.type = 'module';
+        newScriptLoader.src = selectElement.value;
+        document.body.appendChild(newScriptLoader);
+      });
+    });
+  </script>
+</body>
+</html>
